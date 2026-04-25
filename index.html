@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Genially Clone - Editor</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&family=Inter:wght@400;600&family=Montserrat:wght@400;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg-sidebar: #191c21;
@@ -185,6 +185,18 @@
             70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(97, 34, 225, 0); }
             100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(97, 34, 225, 0); }
         }
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
         .btn-action {
             padding: 8px 20px;
             border-radius: 20px;
@@ -233,6 +245,18 @@
             <aside class="props-panel" id="propsPanel">
                 <h3>Propriedades</h3>
                 <div id="textControls" style="display:none">
+                    <div class="prop-group">
+                        <label>Fonte</label>
+                        <select id="p-fontFamily" onchange="updateProp('fontFamily', this.value)">
+                            <option value="'Inter', sans-serif">Inter</option>
+                            <option value="'Roboto', sans-serif">Roboto</option>
+                            <option value="'Montserrat', sans-serif">Montserrat</option>
+                            <option value="'Playfair Display', serif">Playfair Display</option>
+                            <option value="'Dancing Script', cursive">Dancing Script</option>
+                            <option value="Georgia, serif">Georgia</option>
+                            <option value="'Courier New', monospace">Courier New</option>
+                        </select>
+                    </div>
                     <div class="prop-group"><label>Tamanho</label><input type="number" id="p-fontSize" oninput="updateProp('fontSize', this.value + 'px')"></div>
                     <div class="prop-group">
                         <label>Estilo</label>
@@ -252,10 +276,20 @@
                 </div>
                 <div class="prop-group"><label>Cor</label><input type="color" id="p-color" oninput="updateProp('color', this.value)"></div>
                 <div class="prop-group"><label>Fundo</label><input type="color" id="p-bg" oninput="updateProp('backgroundColor', this.value)"></div>
-                <div class="prop-group"><label>Opacidade</label><input type="range" min="0" max="1" step="0.1" oninput="updateProp('opacity', this.value)"></div>
+                <div class="prop-group"><label>Opacidade</label><input type="range" id="p-opacity" min="0" max="1" step="0.1" oninput="updateProp('opacity', this.value)"></div>
                 <div class="prop-group"><label>Arredondamento</label><input type="number" oninput="updateProp('borderRadius', this.value + 'px')"></div>
                 <div id="interactionControls" style="display:none">
                     <hr>
+                    <div class="prop-group">
+                        <label>Animação</label>
+                        <select id="p-animation" onchange="updateProp('animation', this.value)">
+                            <option value="pulse 1.5s infinite">Pulsação</option>
+                            <option value="float 2s infinite ease-in-out">Flutuar</option>
+                            <option value="rotate 3s infinite linear">Girar</option>
+                            <option value="blink 1s infinite">Piscar</option>
+                            <option value="none">Nenhuma</option>
+                        </select>
+                    </div>
                     <label>Ação ao Clicar</label>
                     <select id="p-action" onchange="setInteraction(this.value)">
                         <option value="none">Nenhuma</option>
@@ -380,6 +414,32 @@
             
             document.getElementById('textControls').style.display = el.dataset.type === 'text' ? 'block' : 'none';
             document.getElementById('interactionControls').style.display = el.dataset.type === 'hotspot' ? 'block' : 'none';
+
+            // Sincronizar painel de propriedades com o elemento selecionado
+            const style = window.getComputedStyle(el);
+            document.getElementById('p-opacity').value = style.opacity;
+            document.getElementById('p-color').value = rgbToHex(style.color);
+            document.getElementById('p-bg').value = rgbToHex(style.backgroundColor);
+
+            if (el.dataset.type === 'text') {
+                document.getElementById('p-fontSize').value = parseInt(style.fontSize);
+                const currentFont = style.fontFamily.split(',')[0].replace(/['"]/g, '').trim();
+                const fontSelect = document.getElementById('p-fontFamily');
+                for (let i = 0; i < fontSelect.options.length; i++) {
+                    if (fontSelect.options[i].text === currentFont) { fontSelect.selectedIndex = i; break; }
+                }
+            }
+
+            if (el.dataset.type === 'hotspot') {
+                const anim = el.style.animation || 'pulse 1.5s infinite';
+                document.getElementById('p-animation').value = anim;
+            }
+        }
+
+        function rgbToHex(rgb) {
+            if (!rgb || rgb.includes('rgba(0, 0, 0, 0)')) return '#ffffff';
+            const vals = rgb.match(/\d+/g);
+            return vals ? "#" + vals.slice(0, 3).map(x => parseInt(x).toString(16).padStart(2, '0')).join("") : '#ffffff';
         }
 
         function updateProp(prop, val) {
