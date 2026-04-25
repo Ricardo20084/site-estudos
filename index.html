@@ -298,6 +298,11 @@
                     </select>
                     <input type="text" id="p-actionVal" placeholder="Página ou Texto" oninput="saveInteraction()">
                 </div>
+                <div class="prop-group" style="margin-top: 20px; gap: 10px;">
+                    <button class="btn-action btn-secondary" onclick="addText()">+ Adicionar Texto</button>
+                    <button id="duplicateBtn" class="btn-action btn-secondary" style="display: none;" onclick="duplicateSelectedEl()">Duplicar Selecionado</button>
+                    <button id="deleteBtn" class="btn-action" style="background-color: #e74c3c; color: white; display: none;" onclick="removeSelectedEl()">Remover Selecionado</button>
+                </div>
             </aside>
         </div>
     </div>
@@ -411,6 +416,8 @@
             if (selectedEl) selectedEl.classList.remove('selected');
             selectedEl = el;
             selectedEl.classList.add('selected');
+            document.getElementById('deleteBtn').style.display = 'block';
+            document.getElementById('duplicateBtn').style.display = 'block';
             
             document.getElementById('textControls').style.display = el.dataset.type === 'text' ? 'block' : 'none';
             document.getElementById('interactionControls').style.display = el.dataset.type === 'hotspot' ? 'block' : 'none';
@@ -444,6 +451,42 @@
 
         function updateProp(prop, val) {
             if (selectedEl) selectedEl.style[prop] = val;
+        }
+
+        function duplicateSelectedEl() {
+            if (!selectedEl) return;
+
+            const clone = selectedEl.cloneNode(true);
+            clone.classList.remove('selected');
+
+            // Desloca um pouco a posição para não ficar exatamente em cima do original
+            const left = (parseInt(selectedEl.style.left) || 0) + 20;
+            const top = (parseInt(selectedEl.style.top) || 0) + 20;
+            clone.style.left = left + 'px';
+            clone.style.top = top + 'px';
+
+            // Reatribui eventos (cloneNode não copia listeners adicionados via JavaScript)
+            clone.onmousedown = (e) => { selectElement(clone); startDrag(e, clone); };
+            clone.ondblclick = () => clone.remove();
+
+            const resizer = clone.querySelector('.resizer');
+            if (resizer) {
+                resizer.onmousedown = (e) => startResize(e, clone);
+            }
+
+            canvas.appendChild(clone);
+            selectElement(clone);
+        }
+
+        function removeSelectedEl() {
+            if (selectedEl) {
+                selectedEl.remove();
+                selectedEl = null;
+                document.getElementById('deleteBtn').style.display = 'none';
+                document.getElementById('duplicateBtn').style.display = 'none';
+                document.getElementById('textControls').style.display = 'none';
+                document.getElementById('interactionControls').style.display = 'none';
+            }
         }
 
         function setInteraction(type) {
